@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using Game.Core;
 using Game.Managers;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace Game.Services
 {
+
+    // use this a service to handle all the logic of showing screens
+    // for lack of time this is a monobehaviour, it should be a service and implement a service locator.
+    // Have all the screens stash in a resources.
     public class Navigator : MonoBehaviour
     {
         [SerializeField] private GameController gameController;
@@ -47,7 +50,5 @@ namespace Game.Services
         {
             gameController.RestartGame();
         }
-
-        // use this a service to handle all the logic of showing screens
     }
 }

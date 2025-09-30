@@ -1,29 +1,31 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Game.Config;
 using Game.Core;
-using Game.Services;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Game.Managers
 {
+    // There is a lot of references to the game controller. There is better ways to solve this.
+    // But for lack of time, I prioritize the functionality over the perfect architecture.
     public class GameController : MonoBehaviour
     {
         [SerializeField] private GridConfig gridConfig;
-        [SerializeField] private Button makeMoveButton;
         
+        public GridConfig GridConfig => gridConfig;
         public event Action<int> OnScoreChanged;
         public event Action<int> OnMovesChanged;
         public event Action OnGameOver;
+        public event Action OnGridChanged;
         
         private GameState currentGameState;
+        private bool isResolving;
 
+        private GridController gridService;
         private void Awake()
         {
-            if (makeMoveButton != null)
-            {
-                makeMoveButton.onClick.AddListener(MakeMove);
-            }
+            gridService = new GridController();
         }
         private void Start()
         {
@@ -31,33 +33,81 @@ namespace Game.Managers
         }
 
         private void StartGame()
-        {
+        { 
+            gridService.Initialize(gridConfig);
             currentGameState = new GameState(0, gridConfig.InitialMoves);
             
             OnScoreChanged?.Invoke(currentGameState.score);
             OnMovesChanged?.Invoke(currentGameState.moves);
+            OnGridChanged?.Invoke();
         }
 
-        private void MakeMove()
+        public void OnTileClicked(int x, int y)
         {
+            if (!currentGameState.CanMakeMove || isResolving)
+                return;
+
+            var group = gridService.GetConnectedGroup(x, y);
+            if (group.Count < 2)
+                return;
+
+            ProcessGroup(group);
+        }
+        
+        private void ProcessGroup(IReadOnlyList<Position> group)
+        {
+            isResolving = true;
+            currentGameState.isResolving = true;
+
+            int score = group.Count;
+            currentGameState.score += score;
+            OnScoreChanged?.Invoke(currentGameState.score);
+
             currentGameState.moves--;
             OnMovesChanged?.Invoke(currentGameState.moves);
 
-            
-            //fixed score 10
-            currentGameState.score += 10;
-            OnScoreChanged?.Invoke(currentGameState.score);
-            
-            if (currentGameState.moves > 0) 
+            if (currentGameState.moves <= 0)
+            {
+                currentGameState.isGameOver = true;
+                isResolving = false;
+                OnGameOver?.Invoke();
                 return;
-            
-            currentGameState.isGameOver = true;
-            OnGameOver?.Invoke();
+            }
+
+            StartCoroutine(ResolveGroup(group));
+        }
+
+        private IEnumerator ResolveGroup(IReadOnlyList<Position> group)
+        {
+            gridService.Remove(group);
+            OnGridChanged?.Invoke();
+
+            yield return new WaitForSeconds(1f); // TODO: make this configurable
+
+            gridService.CollapseColumns();
+            OnGridChanged?.Invoke();
+
+            gridService.Refill();
+            OnGridChanged?.Invoke();
+
+            isResolving = false;
+            currentGameState.isResolving = false;
         }
 
         public void RestartGame()
         {
+            StopAllCoroutines();
             StartGame();
+        }
+        public Sprite GetTileColor(int x, int y)
+        {
+            var colorIndex = gridService.Get(x, y);
+            return gridConfig.GetColor(colorIndex);
+        }
+
+        public bool IsValidPosition(int x, int y)
+        {
+            return gridService.IsValidPosition(x, y);
         }
     }
 }

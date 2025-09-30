@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8dfe372fdf44064bf87cc37197bdeb5, type: 3}
   m_Name: GridConfig
   m_EditorClassIdentifier: 
-  width: 6
-  height: 5
+  width: 5
+  height: 6
   initialMoves: 5
-  colorCount: 4
+  tileColor:
+  - {fileID: -9105749763464574675, guid: 9d9ae622ad79946edabe1c0ecbdcdf29, type: 3}
+  - {fileID: -8600411641421432971, guid: 848ebdf6dc39a4a35ad10ea475258034, type: 3}
+  - {fileID: 7424901662290350790, guid: 3286599c5df264df7b312ef5afba7fac, type: 3}
+  - {fileID: -190364731537695696, guid: 5853f1716dca74d7a9501bd2f221a21c, type: 3}
+  - {fileID: 1766323589166174454, guid: 95081f0df4ccd427a96d79dd812c93ca, type: 3}
